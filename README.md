@@ -1,2 +1,2 @@
-# tehOpeng
-CS4243 Computer Vision Project - Soccer
+### TehOPeng
+##### CS4243 Computer Vision Project
