@@ -2,7 +2,7 @@ import cv2
 import cv2.cv as cv
 import numpy as np
 
-print "Enter the filename (w/o extension)"
+print "Enter the filename of the video (w/o extension)"
 print "to have its background extracted:"
 
 fileName = raw_input()
