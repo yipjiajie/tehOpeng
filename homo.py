@@ -265,9 +265,45 @@ for iterate in range (0,1):
 	
 	left_src = left_half_frame
 	right_src = right_half_frame
+	
+	l_frame_height=len(left_src)
+	l_frame_width=len(left_src[0])
+	r_frame_height=len(right_src)
+	r_frame_width=len(right_src[0])
+	print "height", l_frame_height
+	print "width", l_frame_width
+	l_half_width=l_frame_width
+	r_half_width=0
+	l_top_coord=0
+	l_bottom_coord=0
+	r_top_coord=0
+	r_bottom_coord=0
+	count=0
+	for i in range (0,l_frame_height):
+		if left_src[i,l_half_width-1][0]!=0:
+			if count ==0:
+				l_top_coord=i
+				count=1
+			l_bottom_coord=i
+	count=0
+	for i in range (0,r_frame_height):
+		if right_src[i,r_half_width][0]!=0:
+			if count ==0:
+				r_top_coord=i
+				count=1
+			r_bottom_coord=i
+			
+	print "ltop coord", l_top_coord
+	print "lbottom coord", l_bottom_coord
+	print "rtop coord", r_top_coord
+	print "rbottom coord", r_bottom_coord
 
-	left_small_image = cv2.resize(left_src, (0,0), fx=0.2, fy=0.2) 
-	right_small_image = cv2.resize(right_src, (0,0), fx=0.2, fy=0.2) 
+	left_small_image=left_src[50:l_bottom_coord,800:l_frame_width-500]
+	right_small_image=right_src[r_top_coord:r_bottom_coord,500:r_frame_width-1000]
+	left_small_image = cv2.resize(left_small_image, (0,0), fx=0.6, fy=0.6) 
+	right_small_image = cv2.resize(right_small_image, (0,0), fx=0.6, fy=0.6) 
+	#utils.showImage(left_small_image, scale=(0.2, 0.2), timeout=0)
+	#utils.showImage(right_small_image, scale=(0.2, 0.2), timeout=0)
 	#cv2.imwrite("reducedleft.jpg", left_small_image)
 	#cv2.imwrite("reducedright.jpg", right_small_image)
 	# Use the SIFT feature detector
@@ -304,13 +340,11 @@ for iterate in range (0,1):
 
 	final_frame=stitch(left_small_image,right_small_image,H_final,status_final)
 	#video.write(final_frame)
-	
 	cv2.imwrite("final"+str(iterate)+".jpg", final_frame)
-	finalheight=len(final_frame)
-	finalwidth=len(final_frame[0])
+	
 	print "height", len(final_frame)
 	print "width", len(final_frame[0])
-	#utils.showImage(final_frame, scale=(0.5, 0.5), timeout=0)
+	utils.showImage(final_frame, scale=(0.5, 0.5), timeout=0)
 	frame_height=len(final_frame)
 	frame_width=len(final_frame[0])
 	print "height", frame_height
@@ -332,17 +366,14 @@ for iterate in range (0,1):
 	cv2.waitKey(1)
 	if cv2.waitKey(1) & 0xFF == ord('q'):
 		break
-	
-	#detector=cv2.SIFT()
-	if cv2.waitKey(1) & 0xFF == ord('q'):
-		break
 		
-final_frame_=final_frame		
-video  =cv2.VideoWriter("Stitched_video4.avi", -1, 24, (frame_width,(bottom_coord-top_coord)))
+
+video  =cv2.VideoWriter("Stitched_video4.avi", -1, 24, (frame_width-400,(bottom_coord-top_coord)))
 left_cap = cv2.VideoCapture("football_left.mp4")
 mid_cap = cv2.VideoCapture("football_mid.mp4")
 right_cap = cv2.VideoCapture("football_right.mp4")
-for iterate in range (0,7200):
+#for iterate in range (0,7200):
+for iterate in range (0,168):
 	# Capture frame-by-frame
 	ret1, left_frame = left_cap.read()
 	ret2, mid_frame = mid_cap.read()
@@ -352,26 +383,51 @@ for iterate in range (0,7200):
 	left_src = left_half_frame
 	right_src = right_half_frame
 
-	left_small_image = cv2.resize(left_src, (0,0), fx=0.2, fy=0.2) 
-	right_small_image = cv2.resize(right_src, (0,0), fx=0.2, fy=0.2) 
-	#final_frame=(finalwidth,finalheight)
+	l_frame_height=len(left_src)
+	l_frame_width=len(left_src[0])
+	r_frame_height=len(right_src)
+	r_frame_width=len(right_src[0])
+	print "height", l_frame_height
+	print "width", l_frame_width
+	l_half_width=l_frame_width
+	r_half_width=0
+	l_top_coord=0
+	l_bottom_coord=0
+	r_top_coord=0
+	r_bottom_coord=0
+	count=0
+	for i in range (0,l_frame_height):
+		if left_src[i,l_half_width-1][0]!=0:
+			if count ==0:
+				l_top_coord=i
+				count=1
+			l_bottom_coord=i
+	count=0
+	for i in range (0,r_frame_height):
+		if right_src[i,r_half_width][0]!=0:
+			if count ==0:
+				r_top_coord=i
+				count=1
+			r_bottom_coord=i
+			
+	print "ltop coord", l_top_coord
+	print "lbottom coord", l_bottom_coord
+	print "rtop coord", r_top_coord
+	print "rbottom coord", r_bottom_coord
+
+	#right_small_image = cv2.resize(right_src, (0,0), fx=0.8, fy=0.8) 
+	left_small_image=left_src[50:l_bottom_coord,800:l_frame_width-500]
+	right_small_image=right_src[r_top_coord:r_bottom_coord,500:r_frame_width-1000]
+	
+	left_small_image = cv2.resize(left_small_image, (0,0), fx=0.6, fy=0.6) 
+	right_small_image = cv2.resize(right_small_image, (0,0), fx=0.6, fy=0.6) 
+	
 	final_frame=stitch(left_small_image,right_small_image,H_final,status_final)
 	
-	cropped_final=final_frame[top_coord:bottom_coord,0:frame_width]
+	cropped_final=final_frame[top_coord:bottom_coord,200:frame_width-200]
 	#utils.showImage(final_frame, scale=(0.5, 0.5), timeout=0)
 	#utils.showImage(cropped_final, scale=(0.5, 0.5), timeout=0)
-		
-		
-	#if len(final_frame)==finalheight:
-	#	if len(final_frame[0])==finalwidth:
-	#		video.write(final_frame)
-	#		final_frame_=final_frame
-	#		print "correct"
-	#	else:
-	#		video.write(final_frame_)
-	#		final_frame_=final_frame
-	#else:
-	#	video.write(final_frame_)
+
 	video.write(cropped_final)
 	print "pass",iterate
 #release capture
