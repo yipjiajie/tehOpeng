@@ -26,72 +26,26 @@ print "Frame Count:", frameCount
 fgbg1 = cv2.BackgroundSubtractorMOG()
 fgbg2 = cv2.BackgroundSubtractorMOG2()
 
-# for fr in range(0,frameCount-1):
-for fr in range(0,60):
+_, frame = cap.read()
+
+for fr in range(50,frameCount-1):
+# for fr in range(0,60):
     _, frame = cap.read()
     
-    if(fr < 50):
-      continue
+    # if(fr < 50):
+    #   continue
 
-    fgmask1 = fgbg1.apply(frame)
-    # fgmask2 = fgbg2.apply(frame)
-    # print len(frame[:,:,0])
-    # print len(fgmask1/255.0)
-    
-    # mFrame = np.array(frame[:,:,0]).reshape(frameWidth, frameHeight)
-    # mFgMask = np.array(fgmask1).reshape(frameWidth, frameHeight)
+    fgmask1 = fgbg1.apply(frame, learningRate=0.001)
+    # fgmask2 = fgbg2.apply(frame, learningRate=0.001)
 
-    # print len(mFrame), len(mFrame[1,:]), mFrame.size
-    # print len(mFgMask), len(mFgMask[1,:]), mFgMask.size
+    normalizedMask = fgmask1/255.0
 
-    normalizedMask = 1.0 - fgmask1/255.0
-
-
-    for i in range(100, 120):
-      print normalizedMask[i,:]
-
-    masked = np.ma.array(frame, 
-    	mask=np.concatenate((normalizedMask,normalizedMask,normalizedMask)),
-    	fill_value=9999)
-    # masked = np.ma.masked_array(frame)
-    # masked[normalizedMask > 0.0] = np.ma.masked
-    # rgbMask = np.zeros([frameWidth, frameHeight, 3])
-    # rgbMask[:,:,0] = normalizedMask
-    # rgbMask[:,:,1] = normalizedMask
-    # rgbMask[:,:,2] = normalizedMask
-    # r = np.cross(mFgMask/255.0, mFrame)
-    # g = np.cross(mFgMask/255.0, mFrame)
-    # b = np.cross(mFgMask/255.0, mFrame)
-    # r = normalizedMask * frame[:,:,0]
-    # g= normalizedMask * frame[:,:,1]
-    # b = normalizedMask * frame[:,:,2]
-    # print r
-    # result = np.zeros([frameWidth, frameHeight, 3])
-    # result[:,:,0] = r
-    # result[:,:,1] = g
-    # result[:,:,2] = b
-    cv2.imshow('frame',masked)
+    result = frame;
+    result[:,:,0] = frame[:,:,0] * normalizedMask
+    result[:,:,1] = frame[:,:,1] * normalizedMask
+    result[:,:,2] = frame[:,:,2] * normalizedMask
+    cv2.imshow('frame', result)
     cv2.waitKey(1)
-
-
-# for i in range(0,frameWidth-1):
-# 	print fgmask2[i,:]
-
-# print fgmask2
-# _, img = cap.read()
-# avgImg = np.float32(img)
-# loopCount = 0;
-# frameCountFloat = frameCount * 1.0;
-# for fr in range(1,frameCount):
-#     _, img = cap.read()
-
-#     avgImg = (fr/ (fr + 1.0))*avgImg + (1.0/(fr + 1.0))*img
-#     normImg = cv2.convertScaleAbs(avgImg)
-
-#     precentageCount = int((fr/frameCountFloat) * 100);
-#     if(precentageCount > loopCount):
-#     	print precentageCount, "%"
-#     	loopCount = precentageCount
 
 
 # convert into uint8 image 
