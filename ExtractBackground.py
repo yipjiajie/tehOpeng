@@ -45,6 +45,8 @@ h = 10
 isFirstFrame = 0
 frame_old = 0
 corners_old = 0
+corners_total = 0
+corners_count = 0
 
 print "Skipping First 50 frames"
 
@@ -59,18 +61,21 @@ for fr in range(0,frameCount-1):
       cv2.waitKey(1)
       continue
 
-    if(isFirstFrame < 1):
-
-      isFirstFrame = 1;
+    if(isFirstFrame < 1 or corners_count < corners_total * 0.95 or corners_count > corners_total * 1.05):
 
       # find corners in the first frame
       frame_old = cv2.cvtColor(getForeground(frame), cv2.COLOR_BGR2GRAY)
       corners = cv2.goodFeaturesToTrack(frame_old, minDistance=30,
         maxCorners = 500, qualityLevel=0.1, blockSize=10, useHarrisDetector=0, k=0.04)
       corners_old = np.array([c for c in corners if (c[0,1] >= 250 and c[0,1] <= 1000)])
+      corners_count = len(corners_old)
+      corners_total = corners_count
 
-    else:
+      isFirstFrame = 1;
+      continue
+    
 
+    if(isFirstFrame > 0):
       frame_gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
       
       # calculate optical flow
@@ -99,6 +104,7 @@ for fr in range(0,frameCount-1):
       # Now update the previous frame and previous points
       frame_old = frame_gray.copy()
       corners_old = good_new.reshape(-1,1,2)
+      corners_count = len(corners_old)
 
 
 # convert into uint8 image 
