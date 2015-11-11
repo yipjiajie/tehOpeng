@@ -12,7 +12,7 @@ print "to have its background extracted:"
 # fileName = raw_input()
 
 # cap = cv2.VideoCapture(fileName + ".mp4")
-cap = cv2.VideoCapture("football_mid.mp4")
+cap = cv2.VideoCapture("football_right.mp4")
 
 frameHeight = int(cap.get(cv.CV_CAP_PROP_FRAME_WIDTH))
 frameWidth = int(cap.get(cv.CV_CAP_PROP_FRAME_HEIGHT))
@@ -22,78 +22,83 @@ print "Height:",frameHeight
 print "Width:",frameWidth
 print "Frame Count:", frameCount
 
+def getForeground(frame):
+
+  # fgmask1 = fgbg1.apply(frame, learningRate=0.01)
+  fgmask2 = fgbg2.apply(frame, learningRate=0.01)
+
+  normalizedMask = fgmask2/255.0
+
+  result = frame;
+  result[:,:,0] = frame[:,:,0] * normalizedMask
+  result[:,:,1] = frame[:,:,1] * normalizedMask
+  result[:,:,2] = frame[:,:,2] * normalizedMask
+
+  return result
 
 fgbg1 = cv2.BackgroundSubtractorMOG()
 fgbg2 = cv2.BackgroundSubtractorMOG2()
 
-_, frame = cap.read()
+w = 10
+h = 10
 
-# fgmask1 = fgbg1.apply(frame, learningRate=0.001)
-fgmask1 = fgbg2.apply(frame, learningRate=0.001)
+isFirstFrame = 0
+frame_old = 0
+corners_old = 0
 
-normalizedMask = fgmask1/255.0
-
-result = frame;
-result[:,:,0] = frame[:,:,0] * normalizedMask
-result[:,:,1] = frame[:,:,1] * normalizedMask
-result[:,:,2] = frame[:,:,2] * normalizedMask
-
-# find corners in the first frame
-frame_first = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
-
-corners_first = cv2.goodFeaturesToTrack(fgmask1, minDistance=0.75,
-  maxCorners = 200, qualityLevel=0.1, blockSize=3, useHarrisDetector=1, k=0.04)
-
-print corners_first
-
-# Create a mask image for drawing purposes
-mask = np.zeros_like(frame_first)
+print "Skipping First 50 frames"
 
 for fr in range(0,frameCount-1):
 # for fr in range(0,60):
     _, frame = cap.read()
     
-    # skip digital banner
-    if(fr < 50):
+    result = getForeground(frame)
+
+    if(isFirstFrame < 1 and fr < 50):
+      cv2.imshow('frame', result)
+      cv2.waitKey(1)
       continue
 
-    fgmask1 = fgbg2.apply(frame, learningRate=0.001)
-    # fgmask2 = fgbg2.apply(frame, learningRate=0.001)
+    if(isFirstFrame < 1):
 
-    normalizedMask = fgmask1/255.0
+      isFirstFrame = 1;
 
-    result = frame;
-    result[:,:,0] = frame[:,:,0] * normalizedMask
-    result[:,:,1] = frame[:,:,1] * normalizedMask
-    result[:,:,2] = frame[:,:,2] * normalizedMask
+      # find corners in the first frame
+      frame_old = cv2.cvtColor(getForeground(frame), cv2.COLOR_BGR2GRAY)
+      corners = cv2.goodFeaturesToTrack(frame_old, minDistance=30,
+        maxCorners = 500, qualityLevel=0.1, blockSize=10, useHarrisDetector=0, k=0.04)
+      corners_old = np.array([c for c in corners if (c[0,1] >= 250 and c[0,1] <= 1000)])
 
-    cv2.imshow('frame', result)
-    cv2.waitKey(1)
+    else:
 
-    # frame_gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
-    
-    # # calculate optical flow
-    # corners, st, err = cv2.calcOpticalFlowPyrLK(frame_first, frame_gray, 
-    # 	prevPts=corners_first, nextPts=None)
+      frame_gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
+      
+      # calculate optical flow
+      corners, st, err = cv2.calcOpticalFlowPyrLK(frame_old, frame_gray, 
+        prevPts=corners_old, nextPts=None, maxLevel=5, winSize=(50,50), flags=cv2.OPTFLOW_LK_GET_MIN_EIGENVALS)
 
-    # # Select good points
-    # good_new = corners_first[st==1]
-    # good_old = corners[st==1]
+      # Select good points
+      good_new = corners[st==1]
+      good_old = corners_old[st==1]
 
-    # # draw the tracks
-    # for i,(new,old) in enumerate(zip(good_new,good_old)):
-    #     a,b = new.ravel()
-    #     c,d = old.ravel()
-    #     mask = cv2.line(mask, (a,b),(c,d), color[i].tolist(), 2)
-    #     frame = cv2.circle(frame,(a,b),5,color[i].tolist(),-1)
-    # img = cv2.add(frame,mask)
 
-    # cv2.imshow('frame', img)
-    # cv2.waitKey(1)
+      for i in range(0,len(good_new)):
+        x = int(good_new[i,0])
+        y = int(good_new[i,1])
+        cv2.rectangle(frame, (x-w/2,y-h/2), (x+w/2,y+h/2), cv.RGB(0, 0, 255), 1)
 
-    # # Now update the previous frame and previous points
-    # frame_first = frame_gray.copy()
-    # corners_first = good_new.reshape(-1,1,2)
+      for i in range(0,len(good_old)):
+        x = int(good_old[i,0])
+        y = int(good_old[i,1])
+        cv2.rectangle(frame, (x-w/2,y-h/2), (x+w/2,y+h/2), cv.RGB(255, 0, 0), 1)
+
+      cv2.imshow('frame', frame)
+      cv2.waitKey(1)
+
+
+      # Now update the previous frame and previous points
+      frame_old = frame_gray.copy()
+      corners_old = good_new.reshape(-1,1,2)
 
 
 # convert into uint8 image 
