@@ -141,6 +141,7 @@ print left_cap.get(cv.CV_CAP_PROP_FOURCC)
  #828601953
 #video  =cv2.VideoWriter("Stitched_video3.avi", -1, 1, (2409,615))
 for iterate in range (0,1005):
+#for iterate in range (0,1):
 	# Capture frame-by-frame
 	ret1, left_frame = left_cap.read()
 	ret2, mid_frame = mid_cap.read()
@@ -309,7 +310,24 @@ for iterate in range (0,1):
 	finalwidth=len(final_frame[0])
 	print "height", len(final_frame)
 	print "width", len(final_frame[0])
-	utils.showImage(final_frame, scale=(0.5, 0.5), timeout=0)
+	#utils.showImage(final_frame, scale=(0.5, 0.5), timeout=0)
+	frame_height=len(final_frame)
+	frame_width=len(final_frame[0])
+	print "height", frame_height
+	print "width", frame_width
+	half_width=frame_width/2
+	top_coord=0
+	bottom_coord=0
+	count=0
+	for i in range (0,frame_height):
+		if final_frame[i,half_width][0]!=0:
+			if count ==0:
+				top_coord=i
+				count=1
+			bottom_coord=i
+			
+	print "top coord", top_coord
+	print "bottom coord", bottom_coord
 		
 	cv2.waitKey(1)
 	if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -319,8 +337,8 @@ for iterate in range (0,1):
 	if cv2.waitKey(1) & 0xFF == ord('q'):
 		break
 		
-		
-video  =cv2.VideoWriter("Stitched_video3.avi", -1, 24, (finalwidth,finalheight))
+final_frame_=final_frame		
+video  =cv2.VideoWriter("Stitched_video4.avi", -1, 24, (frame_width,(bottom_coord-top_coord)))
 left_cap = cv2.VideoCapture("football_left.mp4")
 mid_cap = cv2.VideoCapture("football_mid.mp4")
 right_cap = cv2.VideoCapture("football_right.mp4")
@@ -336,11 +354,25 @@ for iterate in range (0,7200):
 
 	left_small_image = cv2.resize(left_src, (0,0), fx=0.2, fy=0.2) 
 	right_small_image = cv2.resize(right_src, (0,0), fx=0.2, fy=0.2) 
-	final_frame=(finalwidth,finalheight)
+	#final_frame=(finalwidth,finalheight)
 	final_frame=stitch(left_small_image,right_small_image,H_final,status_final)
-	print "height", len(final_frame)
-	print "width", len(final_frame[0])
-	video.write(final_frame)
+	
+	cropped_final=final_frame[top_coord:bottom_coord,0:frame_width]
+	#utils.showImage(final_frame, scale=(0.5, 0.5), timeout=0)
+	#utils.showImage(cropped_final, scale=(0.5, 0.5), timeout=0)
+		
+		
+	#if len(final_frame)==finalheight:
+	#	if len(final_frame[0])==finalwidth:
+	#		video.write(final_frame)
+	#		final_frame_=final_frame
+	#		print "correct"
+	#	else:
+	#		video.write(final_frame_)
+	#		final_frame_=final_frame
+	#else:
+	#	video.write(final_frame_)
+	video.write(cropped_final)
 	print "pass",iterate
 #release capture
 #cap1.release()
