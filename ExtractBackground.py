@@ -12,7 +12,9 @@ print "to have its background extracted:"
 # fileName = raw_input()
 
 # cap = cv2.VideoCapture(fileName + ".mp4")
-cap = cv2.VideoCapture("football_right.mp4")
+# cap = cv2.VideoCapture("football_right.mp4")
+cap = cv2.VideoCapture("Stitched_videoA.avi")
+
 
 frameHeight = int(cap.get(cv.CV_CAP_PROP_FRAME_WIDTH))
 frameWidth = int(cap.get(cv.CV_CAP_PROP_FRAME_HEIGHT))
@@ -21,6 +23,23 @@ frameCount = int(cap.get(cv.CV_CAP_PROP_FRAME_COUNT))
 print "Height:",frameHeight
 print "Width:",frameWidth
 print "Frame Count:", frameCount
+
+
+fgbg1 = cv2.BackgroundSubtractorMOG()
+fgbg2 = cv2.BackgroundSubtractorMOG2()
+
+w = 10
+h = 10
+videoHeightOffsetTop = 50
+videoHeightOffsetBottom = 180
+
+isFirstFrame = 0
+frame_old = 0
+corners_old = 0
+corners_total = 0
+corners_count = 0
+
+
 
 def getForeground(frame):
 
@@ -36,25 +55,41 @@ def getForeground(frame):
 
   return result
 
-fgbg1 = cv2.BackgroundSubtractorMOG()
-fgbg2 = cv2.BackgroundSubtractorMOG2()
 
-w = 10
-h = 10
+def filterCorners(corners):
+  corners_filtered = np.array([c for c in corners
+  if (c[0,1] >= videoHeightOffsetTop and c[0,1] <= videoHeightOffsetBottom
+    and c[0,1] > (c[0,0] * 0.19) - 200 
+    and c[0,1] > (c[0,0] * -0.235) + 200)])
 
-isFirstFrame = 0
-frame_old = 0
-corners_old = 0
-corners_total = 0
-corners_count = 0
+  return corners_filtered
 
 print "Skipping First 50 frames"
 
+# _, frame = cap.read()
+
+# frame_old = cv2.cvtColor(getForeground(frame), cv2.COLOR_BGR2GRAY)
+# corners = cv2.goodFeaturesToTrack(frame_old, minDistance=30,
+#   maxCorners = 1000, qualityLevel=0.01, blockSize=10, useHarrisDetector=0, k=0.04)
+
+# corners_old = filterCorners(corners)
+
+# for i in range(0,len(corners_old)):
+#   x = int(corners_old[i,0,0])
+#   y = int(corners_old[i,0,1])
+#   cv2.rectangle(frame, (x-w/2,y-h/2), (x+w/2,y+h/2), cv.RGB(255, 0, 0), 1)
+
+# cv2.imshow('frame', frame)
+
+
 for fr in range(0,frameCount-1):
-# for fr in range(0,60):
+# for fr in range(0,0):
     _, frame = cap.read()
     
     result = getForeground(frame)
+    # cv2.imshow('frame', result)
+    # cv2.waitKey(1)
+    # continue
 
     if(isFirstFrame < 1 and fr < 50):
       cv2.imshow('frame', result)
@@ -67,7 +102,7 @@ for fr in range(0,frameCount-1):
       frame_old = cv2.cvtColor(getForeground(frame), cv2.COLOR_BGR2GRAY)
       corners = cv2.goodFeaturesToTrack(frame_old, minDistance=30,
         maxCorners = 500, qualityLevel=0.1, blockSize=10, useHarrisDetector=0, k=0.04)
-      corners_old = np.array([c for c in corners if (c[0,1] >= 250 and c[0,1] <= 1000)])
+      corners_old = filterCorners(corners)
       corners_count = len(corners_old)
       corners_total = corners_count
 
@@ -82,7 +117,7 @@ for fr in range(0,frameCount-1):
       corners, st, err = cv2.calcOpticalFlowPyrLK(frame_old, frame_gray, 
         prevPts=corners_old, nextPts=None, maxLevel=5, winSize=(50,50), flags=cv2.OPTFLOW_LK_GET_MIN_EIGENVALS)
 
-      # Select good points
+      # Select good points (st = status, 1 if corner is found in the next frame)
       good_new = corners[st==1]
       good_old = corners_old[st==1]
 
