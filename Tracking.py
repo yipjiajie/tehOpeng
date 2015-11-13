@@ -251,7 +251,7 @@ print "Skipping First ",videoFrameOffset," frames"
 
 
 for fr in range(0,7200):
-  pitch = cv2.imread("forTransformFinal.jpg")
+  pitch = cv2.imread("pitch.jpg")
   frame = cv2.imread("pics/final"+`fr`+".jpg",cv2.IMREAD_COLOR)
   
   original, foreColor, foreBW = getForeground(frame.copy())
