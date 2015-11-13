@@ -39,6 +39,8 @@ videoHeightOffsetBottom = 1030
 videoWidthOffsetLeft = 30
 videoWidthOffsetRight = videoWidth
 
+videoFrameOffset = 55
+
 isFirstFrame = 0
 frame_old = 0
 corners_old = 0
@@ -69,7 +71,7 @@ def filterContours(contours):
 def getForeground(frame, bw = 0):
 
   # fgmask = fgbg1.apply(frame, learningRate=0.01)
-  fgmask = fgbg2.apply(frame, learningRate=0.005)
+  fgmask = fgbg2.apply(frame, learningRate=0.003)
 
   original = frame.copy()
   color = frame
@@ -82,8 +84,15 @@ def getForeground(frame, bw = 0):
 
   return original, color, bw
 
+def getExtremePoints(contour):
+  leftmost = tuple(cnt[cnt[:,:,0].argmin()][0])
+  rightmost = tuple(cnt[cnt[:,:,0].argmax()][0])
+  topmost = tuple(cnt[cnt[:,:,1].argmin()][0])
+  bottommost = tuple(cnt[cnt[:,:,1].argmax()][0])
 
-print "Skipping First 50 frames"
+  return leftmost, rightmost, topmost, bottommost
+
+print "Skipping First ",videoFrameOffset," frames"
 
 
 
@@ -102,9 +111,9 @@ for fr in range(0,500):
   # cv2.waitKey(1)
   # continue
 
-  if(isFirstFrame < 1 and fr < 55):
-    # cv2.imshow('frame', original)
-    # cv2.waitKey(1)
+  if(isFirstFrame < 1 and fr < videoFrameOffset):
+    cv2.imshow('frame', original)
+    cv2.waitKey(1)
     continue
 
   # print "start find contours"
@@ -156,7 +165,7 @@ for fr in range(0,500):
   # cv2.imshow('frame', original)
   # continue
 
-  if(isFirstFrame < 1 or corners_count < 21 or fr % 12 == 0):
+  if(isFirstFrame < 1 or corners_count < 21 or  corners_count > 23 or fr % 12 == 0):
 
     startTime = time.time()
 
