@@ -326,7 +326,7 @@ for fr in range(0,500):
 print "End"
 cv2.waitKey(0)
 
-cap.release()
+# cap.release()
 cv2.destroyAllWindows()
 
 
