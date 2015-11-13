@@ -250,7 +250,7 @@ print "Skipping First ",videoFrameOffset," frames"
 
 
 
-for fr in range(3545,5400):
+for fr in range(0,7200):
   pitch = cv2.imread("forTransformFinal.jpg")
   frame = cv2.imread("pics/final"+`fr`+".jpg",cv2.IMREAD_COLOR)
   
@@ -307,9 +307,22 @@ for fr in range(3545,5400):
 
 
   # Actual Code
-  if(isFirstFrame < 1 and fr < 3600):
-    # cv2.imshow('frame', original)
-    # cv2.waitKey(1)
+  if(isFirstFrame < 1 and fr < videoFrameOffset):
+    canvas = cv2.resize(canvas, (0,0), fx = 0.5, fy =0.7)
+    pitch = cv2.resize(pitch, (0,0), fx = 0.5, fy =0.5)
+
+    canvas_w = len(canvas[0,:])
+    canvas_h = len(canvas[:,0])
+    pitch_w = len(pitch[0,:])
+    pitch_h = len(pitch[:,0])
+    pitch_offset = canvas_w/2 - pitch_w/2
+    pitch_wEnd = pitch_offset +pitch_w
+    total_h = canvas_h + pitch_h
+
+    enlarged = np.zeros((total_h,canvas_w,3))
+    enlarged[0:canvas_h, 0:canvas_w] = canvas
+    enlarged[canvas_h:total_h, pitch_offset:pitch_wEnd] = pitch
+    cv2.imwrite("enlarge/enlarged"+`fr`+".jpg", enlarged)
     continue
 
   startTime = time.time()
@@ -330,7 +343,7 @@ for fr in range(3545,5400):
     cntBottomWhite = []
 
     for cnt in contours:
-      # print "contour:\n",cnt
+      
       area = cv2.contourArea(cnt)     
       bottomX, bottomY = tuple(cnt[cnt[:,:,1].argmax()][0])
 
@@ -344,11 +357,6 @@ for fr in range(3545,5400):
       if(isOnField(bottomX, bottomY) <= 0):
         continue
 
-      # cntBottom.append([[x,y]])
-      # rect = cv2.minAreaRect(cnt)
-      # box = cv2.cv.BoxPoints(rect)
-      # box = np.int0(box)
-      # cv2.drawContours(original,[box],0,(0,100,255),2)
 
       boundX, boundY, boundW, boundH = cv2.boundingRect(cnt)
 
@@ -397,9 +405,6 @@ for fr in range(3545,5400):
           # cv2.rectangle(canvas, (cx,cy), (cx+10,cy+10), cv.RGB(0,0,0), 1)
           cntBottomUnknown.append([[bottomX, bottomY]])
 
-    # print "corners:\n", np.array(cntBottom, dtype='f')
-    
-    # contours_filtered = filterContours(np.array(cntBottom, dtype='f'))
     
     cntBottomUnknown = np.array(cntBottomUnknown, dtype='f')
     cntBottomRed = np.array(cntBottomRed, dtype='f')
@@ -408,17 +413,10 @@ for fr in range(3545,5400):
     cntBottomGreen = np.array(cntBottomGreen, dtype='f')
     cntBottomWhite = np.array(cntBottomWhite, dtype='f')
 
-    # find corners in the first frame
     frame_old = cv2.cvtColor(foreColor, cv2.COLOR_BGR2GRAY)
     # corners = cv2.goodFeaturesToTrack(frame_old, minDistance=35,
       # maxCorners = 1000, qualityLevel=0.08, blockSize=9, useHarrisDetector=0, k=0.04)
     # corners_old = filterCorners(corners)
-
-    # corners_old = contours_filtered
-    # corners_old = np.concatenate((cntBottomUnknown, cntBottomRed, cntBottomBlue, cntBottomLime, cntBottomGreen, cntBottomWhite))
-    # corners_count = len(cntBottomUnknown) + len(cntBottomUnknown) + len(cntBottomRed) + len(cntBottomBlue) + len(cntBottomLime) + len(cntBottomGreen) + len(cntBottomWhite)
-    # corners_count = len(corners_old)
-    # corners_total = corners_count
 
     isFirstFrame = 1;
   
@@ -427,7 +425,6 @@ for fr in range(3545,5400):
 
     frame_gray = cv2.cvtColor(foreColor, cv2.COLOR_BGR2GRAY)
     
-    # print "corners:\n", corners_old
 
     # red players
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomRed, canvas)
@@ -579,13 +576,8 @@ for fr in range(3545,5400):
         pitch, px, py = drawPlayer(x,y,homography,pitch,0,0,0)
 
 
-    # Now update the previous frame and previous points
+    # Now update the previous frame
     frame_old = frame_gray.copy()
-    # corners_old = good_new.reshape(-1,1,2)
-    # corners_old = np.concatenate((cntBottomUnknown, cntBottomRed, cntBottomBlue, cntBottomLime, cntBottomGreen, cntBottomWhite))
-    # corners_count = len(corners_old)
-
-    # corners_count = len(cntBottomUnknown) + len(cntBottomUnknown) + len(cntBottomRed) + len(cntBottomBlue) + len(cntBottomLime) + len(cntBottomGreen) + len(cntBottomWhite)
 
 
   #cv2.line(canvas, (94, 951), (7332, 892), cv.RGB(255,0,0), 1)
