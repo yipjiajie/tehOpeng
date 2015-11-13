@@ -8,6 +8,47 @@ import numpy as np
 import time
 import matplotlib.colors as colors
 
+##aerial view homography
+actualpts = np.zeros([5,2])
+actualpts2 = np.zeros([5,2])
+
+actualpts[0][0] = 4484
+actualpts[0][1] = 281
+actualpts[1][0] = 4185
+actualpts[1][1] = 281
+actualpts[2][0] = 4185
+actualpts[2][1] = 1007
+actualpts[3][0] = 4486
+actualpts[3][1] = 1007
+actualpts[4][0] = 4384
+actualpts[4][1] = 477
+
+actualpts2[0][0] = 4976
+actualpts2[0][1] = 249
+actualpts2[1][0] = 4595
+actualpts2[1][1] = 254
+actualpts2[2][0] = 5514
+actualpts2[2][1] = 563
+actualpts2[3][0] = 6311
+actualpts2[3][1] = 552
+actualpts2[4][0] = 5040
+actualpts2[4][1] = 297
+
+## Find homography between the views.
+size = (8000,8000)
+panorama = np.zeros((8000,8000, 3), np.uint8)
+(homography, _) = cv2.findHomography(actualpts2, actualpts)
+
+
+
+def drawPlayer(x,y,hm,img,r,g,b):
+  tz = hm[2,0]* x  + hm[2,1]*y + hm[2,2]
+  tx = hm[0,0]* x  + hm[0,1]*y + hm[0,2]
+  ty =  hm[1,0]* x  + hm[1,1]*y + hm[1,2]
+  tx = int(tx/tz)
+  ty = int(ty/tz)
+  cv2.circle(img, (tx-2000,ty),20, cv.RGB(r,g,b), thickness=5, lineType=8, shift=0)
+  return img
       
 def colorDistributionBlue(startx,starty,deltax,deltay,img):
   
@@ -241,9 +282,9 @@ print "Skipping First ",videoFrameOffset," frames"
 # for fr in range(0,frameCount-1):
 # for fr in range(30, 89):
 # for fr in range(0,0):
-for fr in range(430,1440):
+for fr in range(2880,3250):
 
-  frame = cv2.imread("pics/final"+`fr`+".jpg",cv2.IMREAD_COLOR)
+  frame = cv2.imread("vision2/final"+`fr`+".jpg",cv2.IMREAD_COLOR)
   
   original, foreColor, foreBW = getForeground(frame.copy())
 
@@ -298,7 +339,7 @@ for fr in range(430,1440):
 
 
   # Actual Code
-  if(isFirstFrame < 1 and fr < 480):
+  if(isFirstFrame < 1 and fr < 2882):
     # cv2.imshow('frame', original)
     # cv2.waitKey(1)
     continue
@@ -419,7 +460,8 @@ for fr in range(430,1440):
 
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomRed, canvas)
     cntBottomRed = newPoints.copy()
-    
+    pitch = cv2.imread("forTransform.jpg")
+    hm = homography
     if(len(cntBottomRed) > 0):
 
       # blue team offside line
@@ -434,6 +476,7 @@ for fr in range(430,1440):
         x = int(pt[0])
         y = int(pt[1])
         cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(255,0,0), 1)
+        pitch = drawPlayer(x,y,homography,pitch,255,0,0)
 
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomBlue, canvas)
     cntBottomBlue = newPoints.copy()
@@ -452,7 +495,8 @@ for fr in range(430,1440):
         x = int(pt[0])
         y = int(pt[1])
         cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(0,0,255), 1)
-
+        pitch = drawPlayer(x,y,homography,pitch,0,0,255)
+        
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomGreen, canvas)
     cntBottomGreen = newPoints.copy()
 
@@ -461,6 +505,7 @@ for fr in range(430,1440):
         x = int(pt[0])
         y = int(pt[1])
         cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(0,255,0), 1)
+        pitch = drawPlayer(x,y,homography,pitch,0,255,0)
 
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomLime, canvas)
     cntBottomLime = newPoints.copy()
@@ -470,7 +515,8 @@ for fr in range(430,1440):
         x = int(pt[0])
         y = int(pt[1])
         cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(255,255,255), 1)
-
+        pitch = drawPlayer(x,y,homography,pitch,255,255,255)
+        
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomWhite, canvas)
     cntBottomWhite = newPoints.copy()
 
@@ -482,7 +528,7 @@ for fr in range(430,1440):
         x = int(pt[0])
         y = int(pt[1])
         cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(0,0,0), 1)
-
+        pitch = drawPlayer(x,y,homography,pitch,0,0,0)
 
     # Now update the previous frame and previous points
     frame_old = frame_gray.copy()
@@ -499,6 +545,7 @@ for fr in range(430,1440):
   cv2.line(canvas, (4809, 203), (7332, 770), cv.RGB(255,0,0), 1)
 
   cv2.imwrite("out.jpg", canvas)
+  cv2.imwrite("transform/"+`fr`+".jpg",pitch)
   # cv2.imshow('frame', canvas)
   cv2.waitKey(1)
 
