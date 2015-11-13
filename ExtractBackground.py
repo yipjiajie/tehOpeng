@@ -99,7 +99,6 @@ print "Skipping First ",videoFrameOffset," frames"
 # for fr in range(0,frameCount-1):
 for fr in range(0,500):
 # for fr in range(0,0):
-# for fr in range(0, 1440):
 
   frame = cv2.imread("pics/final"+`fr`+".jpg",cv2.IMREAD_COLOR)
   
