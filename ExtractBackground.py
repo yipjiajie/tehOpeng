@@ -155,32 +155,6 @@ def colorDistribution(startx,starty,img):
   print "max:" ,maxbin
   return maxbin
 
-#    *kernel = np.ones((3,3), np.uint8)
-#    color = []
-#    color.append(imgp[x][y])
-#    color.append(imgp[x+1][y+1])
-#    color.append(imgp[x-1][y-1])
-#    color.append(imgp[x+1][y-1])
-#    color.append(imgp[x-1][y+1])
-  
-# print "Enter the filename of the video (w/o extension)"
-# print "to have its background extracted:"
-
-# fileName = raw_input()
-
-# cap = cv2.VideoCapture(fileName + ".mp4")
-# cap = cv2.VideoCapture("football_right.mp4")
-# cap = cv2.VideoCapture("Stitched_videoB.avi")
-
-
-# frameHeight = int(cap.get(cv.CV_CAP_PROP_FRAME_WIDTH))
-# frameWidth = int(cap.get(cv.CV_CAP_PROP_FRAME_HEIGHT))
-# frameCount = int(cap.get(cv.CV_CAP_PROP_FRAME_COUNT))
-
-# print "Height:",frameHeight
-# print "Width:",frameWidth
-# print "Frame Count:", frameCount
-
 
 fgbg1 = cv2.BackgroundSubtractorMOG()
 fgbg2 = cv2.BackgroundSubtractorMOG2()
@@ -296,9 +270,6 @@ print "Skipping First ",videoFrameOffset," frames"
 
 
 
-# for fr in range(0,frameCount-1):
-# for fr in range(30, 89):
-# for fr in range(0,0):
 for fr in range(0,500):
   pitch = cv2.imread("forTransformFinal.jpg")
   frame = cv2.imread("pics/final"+`fr`+".jpg",cv2.IMREAD_COLOR)
@@ -356,13 +327,13 @@ for fr in range(0,500):
 
 
   # Actual Code
-  if(isFirstFrame < 1 and fr < 1):
+  if(isFirstFrame < 1 and fr < videoFrameOffset):
     # cv2.imshow('frame', original)
     # cv2.waitKey(1)
     continue
 
 
-  if(isFirstFrame < 1 or fr % 4 == 0):
+  if(isFirstFrame < 1 or fr % 6 == 0):
 
     startTime = time.time()
 
