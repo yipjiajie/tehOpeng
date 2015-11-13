@@ -13,10 +13,10 @@ import time
 # print "frame width is ", 3668
 
 #3668 x 1328
-video =cv2.VideoWriter("full.avi", cv.CV_FOURCC('M','J','P','G'), 24, (3668,1328))
+video =cv2.VideoWriter("football_full.avi", cv.CV_FOURCC('M','J','P','G'), 24, (3668,1328))
 
 fullStartTime = time.time()
-for i in range (3600,3840):
+for i in range (0,7200):
 	# startTime = time.time()
 
 	print "Frame",i

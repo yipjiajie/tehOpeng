@@ -250,7 +250,7 @@ print "Skipping First ",videoFrameOffset," frames"
 
 
 
-for fr in range(1745,5400):
+for fr in range(3545,5400):
   pitch = cv2.imread("forTransformFinal.jpg")
   frame = cv2.imread("pics/final"+`fr`+".jpg",cv2.IMREAD_COLOR)
   
@@ -307,7 +307,7 @@ for fr in range(1745,5400):
 
 
   # Actual Code
-  if(isFirstFrame < 1 and fr < 1800):
+  if(isFirstFrame < 1 and fr < 3600):
     # cv2.imshow('frame', original)
     # cv2.waitKey(1)
     continue
