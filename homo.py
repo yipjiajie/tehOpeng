@@ -402,7 +402,5 @@ for iterate in range (0,7200):
 	#print "pass",iterate
 
 print "End"
-video.release()
-
 
 cv2.destroyAllWindows()
