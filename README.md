@@ -5,7 +5,7 @@
 #### Step 1:
 Ensure that you have all these files in the same folder
 * ``Stitch.py``
-* ``util.py``
+* ``utils.py``
 * football_left.mp4, football_mid.mp4, football_right.mp4
 * ``Tracking.py``
 * ``Render.py``
@@ -30,7 +30,7 @@ Ensure that you have all these folders and files created in the same folder
 * ``football_full.avi`` is rendered
 
 #### Explanation:
-* ``Stitch.py`` (with the help of util.py) takes in the three football videos and * stitches them into one video and then generates individual video frames. It can take quite awhile, roughly 2-3 hours and can take up quite a big of space, roughly 8GB.
+* ``Stitch.py`` (with the help of utils.py) takes in the three football videos and * stitches them into one video and then generates individual video frames. It can take quite awhile, roughly 2-3 hours and can take up quite a big of space, roughly 8GB.
 
 * ``Tracking.py`` then reads in the frames generated and output the topdown view and tracking of the players on the field in individual frames
 
