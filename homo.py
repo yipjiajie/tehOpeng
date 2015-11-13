@@ -72,8 +72,15 @@ def stitch(base_frame,to_be_stitched_frame,H,status):
 			max_y += -min_y
 		#print "Inverse Homography: \n", H_inv
 		#print "Min Points: ", (min_x, min_y)
-	
-		mod_inv_h = move_h * H_inv
+		
+		move_h2= np.matrix(np.identity(3), np.float32)
+		if ( min_x < 0 ):
+			move_h2[0,2] +=-min_x
+			max_x += -min_x
+		if ( min_y < 0 ):
+			move_h2[1,2] += -min_y
+			max_y += -min_y
+		mod_inv_h = move_h2 * H_inv
 		
 		img_w = int(math.ceil(max_x))
 		img_h = int(math.ceil(max_y))
@@ -83,17 +90,30 @@ def stitch(base_frame,to_be_stitched_frame,H,status):
 		# stitch
 		base_img_warp = cv2.warpPerspective(base_frame, move_h, (img_w, img_h))
 		to_be_stitched_warp = cv2.warpPerspective(to_be_stitched_frame, mod_inv_h, (img_w, img_h))
+		#utils.showImage(base_img_warp, scale=(0.2, 0.2), timeout=0)
+		#utils.showImage(to_be_stitched_warp, scale=(0.2, 0.2), timeout=0)
 
 		enlarged_base_img = np.zeros((img_h, img_w, 3), np.uint8)
 		#print "Enlarged Image Shape: ", enlarged_base_img.shape
 		#print "Base Image Shape: ", base_frame.shape
 		#print "Base Image Warp Shape: ", base_frame.shape
-		(ret,data_map) = cv2.threshold(cv2.cvtColor(to_be_stitched_warp, cv2. COLOR_BGR2GRAY), 0, 255, cv2.THRESH_BINARY)
+		#(ret,data_map) = cv2.threshold(cv2.cvtColor(to_be_stitched_warp, cv2. COLOR_BGR2GRAY), 0, 255, cv2.THRESH_BINARY)
+		(ret,data_map) = cv2.threshold(cv2.cvtColor(base_img_warp, cv2. COLOR_BGR2GRAY), 0, 255, cv2.THRESH_BINARY)
+		#(ret,data_map2) = cv2.threshold(cv2.cvtColor(to_be_stitched_warp, cv2. COLOR_BGR2GRAY), 0, 255, cv2.THRESH_BINARY)
+		#utils.showImage(data_map, scale=(0.2, 0.2), timeout=0)
+		#utils.showImage(data_map2, scale=(0.2, 0.2), timeout=0)
+		#utils.showImage(np.bitwise_xor(data_map,newmask), scale=(0.2, 0.2), timeout=0)
+		#utils.showImage(np.bitwise_not(data_map), scale=(0.2, 0.2), timeout=0)
+		#enlarged_base_img = cv2.add(enlarged_base_img, base_img_warp, mask=np.bitwise_not(data_map), dtype=cv2.CV_8U)
 		
-		enlarged_base_img = cv2.add(enlarged_base_img, base_img_warp, mask=np.bitwise_not(data_map), dtype=cv2.CV_8U)
+		#utils.showImage(enlarged_base_img, scale=(0.2, 0.2), timeout=0)
 		
 		# Now add the warped image
-		final_img = cv2.add(enlarged_base_img, to_be_stitched_warp, dtype=cv2.CV_8U)
+		#final_img = cv2.add(enlarged_base_img, to_be_stitched_warp, dtype=cv2.CV_8U)
+		enlarged_base_img = cv2.add(enlarged_base_img, to_be_stitched_warp, mask=np.bitwise_not(data_map), dtype=cv2.CV_8U)
+		final_img = cv2.add(enlarged_base_img, base_img_warp, dtype=cv2.CV_8U)
+		#utils.showImage(final_img, scale=(0.2, 0.2), timeout=0)
+		
 		
 		# Crop off the black edges
 		final_gray = cv2.cvtColor(final_img, cv2.COLOR_BGR2GRAY)
@@ -132,6 +152,9 @@ height= mid_cap.get(cv.CV_CAP_PROP_FRAME_WIDTH)
 fps=mid_cap.get(cv.CV_CAP_PROP_FPS)
 frameCount= mid_cap.get(cv.CV_CAP_PROP_FRAME_COUNT)
 
+ff_width=0.0;
+ff_height=0.0;
+
 print "height=",height
 print "width=",width
 print "fps",fps
@@ -141,7 +164,7 @@ print left_cap.get(cv.CV_CAP_PROP_FOURCC)
  #828601953
 #video  =cv2.VideoWriter("Stitched_video3.avi", -1, 1, (2409,615))
 for iterate in range (0,1005):
-#for iterate in range (0,1):
+	#for iterate in range (0,5):
 	# Capture frame-by-frame
 	ret1, left_frame = left_cap.read()
 	ret2, mid_frame = mid_cap.read()
@@ -155,7 +178,11 @@ for iterate in range (0,1):
 	
 	# Get gray scale Image
 	left_gray = cv2.cvtColor(left_frame, cv2.COLOR_BGR2GRAY)
+	#mid_frame=mid_frame[0:len(mid_frame),4:len(mid_frame[0])]
 	mid_gray = cv2.cvtColor(mid_frame, cv2.COLOR_BGR2GRAY)
+	#utils.showImage(mid_frame[0:len(mid_frame),4:len(mid_frame[0])], scale=(1, 1), timeout=0)
+	#utils.showImage(left_frame, scale=(1, 1), timeout=0)
+	#utils.showImage(mid_gray, scale=(1, 1), timeout=0)
 	right_gray = cv2.cvtColor(right_frame, cv2.COLOR_BGR2GRAY)
 	
 	#Get Gaussian blur
@@ -297,11 +324,12 @@ for iterate in range (0,1):
 	print "lbottom coord", l_bottom_coord
 	print "rtop coord", r_top_coord
 	print "rbottom coord", r_bottom_coord
-
-	left_small_image=left_src[50:l_bottom_coord,800:l_frame_width-500]
+	
+	left_small_image=left_src[50:l_bottom_coord,500:l_frame_width-500]
 	right_small_image=right_src[r_top_coord:r_bottom_coord,500:r_frame_width-1000]
-	left_small_image = cv2.resize(left_small_image, (0,0), fx=0.6, fy=0.6) 
-	right_small_image = cv2.resize(right_small_image, (0,0), fx=0.6, fy=0.6) 
+	#cv2.imwrite("0test.jpg",left_small_image)
+	left_small_image = cv2.resize(left_small_image, (0,0), fx=0.9, fy=0.9) 
+	right_small_image = cv2.resize(right_small_image, (0,0), fx=0.9, fy=0.9) 
 	#utils.showImage(left_small_image, scale=(0.2, 0.2), timeout=0)
 	#utils.showImage(right_small_image, scale=(0.2, 0.2), timeout=0)
 	#cv2.imwrite("reducedleft.jpg", left_small_image)
@@ -335,16 +363,16 @@ for iterate in range (0,1):
 	p1 = np.array([k.pt for k in new_left_kp])
 	p2 = np.array([k.pt for k in new_right_kp])
 	
-	H_final, status_final = cv2.findHomography(p1, p2, cv2.RANSAC, 5.0)
+	H_final, status_final = cv2.findHomography(p2, p1, cv2.RANSAC, 5.0)
 	#print '%d / %d  inliers/matched' % (np.sum(status), len(status))
 
-	final_frame=stitch(left_small_image,right_small_image,H_final,status_final)
+	final_frame=stitch(right_small_image[0:len(right_small_image),1:len(right_small_image[0])],left_small_image,H_final,status_final)
 	#video.write(final_frame)
 	cv2.imwrite("final"+str(iterate)+".jpg", final_frame)
 	
 	print "height", len(final_frame)
 	print "width", len(final_frame[0])
-	utils.showImage(final_frame, scale=(0.5, 0.5), timeout=0)
+	#utils.showImage(final_frame, scale=(0.5, 0.5), timeout=0)
 	frame_height=len(final_frame)
 	frame_width=len(final_frame[0])
 	print "height", frame_height
@@ -362,24 +390,25 @@ for iterate in range (0,1):
 			
 	print "top coord", top_coord
 	print "bottom coord", bottom_coord
-		
+	
 	cv2.waitKey(1)
 	if cv2.waitKey(1) & 0xFF == ord('q'):
 		break
 		
 
-video  =cv2.VideoWriter("Stitched_video4.avi", -1, 24, (frame_width-400,(bottom_coord-top_coord)))
+#video  =cv2.VideoWriter("Stitched_video4.avi", -1, 24, (frame_width-400,(bottom_coord-top_coord)))
 left_cap = cv2.VideoCapture("football_left.mp4")
 mid_cap = cv2.VideoCapture("football_mid.mp4")
 right_cap = cv2.VideoCapture("football_right.mp4")
 #for iterate in range (0,7200):
-for iterate in range (0,168):
+for iterate in range (0,7200):
 	# Capture frame-by-frame
 	ret1, left_frame = left_cap.read()
 	ret2, mid_frame = mid_cap.read()
 	ret3, right_frame = right_cap.read()
-	left_half_frame=stitch(mid_frame,left_frame,H_left,status_left)
-	right_half_frame=stitch(mid_frame,right_frame,H_right,status_right)
+	#mid_frame=mid_frame[0:len(mid_frame),3:len(mid_frame[0])]
+	left_half_frame=stitch(mid_frame[0:len(mid_frame),4:len(mid_frame[0])],left_frame,H_left,status_left)
+	right_half_frame=stitch(mid_frame[0:len(mid_frame),4:len(mid_frame[0])],right_frame,H_right,status_right)
 	left_src = left_half_frame
 	right_src = right_half_frame
 
@@ -387,49 +416,28 @@ for iterate in range (0,168):
 	l_frame_width=len(left_src[0])
 	r_frame_height=len(right_src)
 	r_frame_width=len(right_src[0])
-	print "height", l_frame_height
-	print "width", l_frame_width
-	l_half_width=l_frame_width
-	r_half_width=0
-	l_top_coord=0
-	l_bottom_coord=0
-	r_top_coord=0
-	r_bottom_coord=0
-	count=0
-	for i in range (0,l_frame_height):
-		if left_src[i,l_half_width-1][0]!=0:
-			if count ==0:
-				l_top_coord=i
-				count=1
-			l_bottom_coord=i
-	count=0
-	for i in range (0,r_frame_height):
-		if right_src[i,r_half_width][0]!=0:
-			if count ==0:
-				r_top_coord=i
-				count=1
-			r_bottom_coord=i
-			
-	print "ltop coord", l_top_coord
-	print "lbottom coord", l_bottom_coord
-	print "rtop coord", r_top_coord
-	print "rbottom coord", r_bottom_coord
-
-	#right_small_image = cv2.resize(right_src, (0,0), fx=0.8, fy=0.8) 
-	left_small_image=left_src[50:l_bottom_coord,800:l_frame_width-500]
+	#print "height", l_frame_height
+	#print "width", l_frame_width
+	
+	#print "yomama"
+	left_small_image=left_src[50:l_bottom_coord,500:l_frame_width-500]
 	right_small_image=right_src[r_top_coord:r_bottom_coord,500:r_frame_width-1000]
 	
-	left_small_image = cv2.resize(left_small_image, (0,0), fx=0.6, fy=0.6) 
-	right_small_image = cv2.resize(right_small_image, (0,0), fx=0.6, fy=0.6) 
-	
-	final_frame=stitch(left_small_image,right_small_image,H_final,status_final)
+	left_small_image = cv2.resize(left_small_image, (0,0), fx=0.9, fy=0.9) 
+	right_small_image = cv2.resize(right_small_image, (0,0), fx=0.9, fy=0.9) 
+	#utils.showImage(left_small_image, scale=(0.2, 0.2), timeout=0)
+	#utils.showImage(right_small_image, scale=(0.2, 0.2), timeout=0)
+	final_frame=stitch(right_small_image[0:len(right_small_image),1:len(right_small_image[0])],left_small_image,H_final,status_final)
 	
 	cropped_final=final_frame[top_coord:bottom_coord,200:frame_width-200]
+	#cv2.resize(cropped_final, (0,0), fx=0.95, fy=0.95) 
+	
 	#utils.showImage(final_frame, scale=(0.5, 0.5), timeout=0)
-	#utils.showImage(cropped_final, scale=(0.5, 0.5), timeout=0)
-
-	video.write(cropped_final)
-	print "pass",iterate
+	#utils.showImage(cropped_final, scale=(0.2, 0.2), timeout=0)
+	
+	cv2.imwrite("final"+str(iterate)+".jpg", cropped_final)
+	#video.write(cropped_final)
+	#print "pass",iterate
 #release capture
 #cap1.release()
 print "End"
