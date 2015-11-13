@@ -47,7 +47,7 @@ def drawPlayer(x,y,hm,img,r,g,b):
   ty =  hm[1,0]* x  + hm[1,1]*y + hm[1,2]
   tx = int(tx/tz)
   ty = int(ty/tz)
-  cv2.circle(img, (tx-2000,ty),20, cv.RGB(r,g,b), thickness=5, lineType=8, shift=0)
+  cv2.circle(img, (tx-2503,ty),20, cv.RGB(r,g,b), thickness=5, lineType=8, shift=0)
   return img
       
 def colorDistributionBlue(startx,starty,deltax,deltay,img):
@@ -283,7 +283,7 @@ print "Skipping First ",videoFrameOffset," frames"
 # for fr in range(30, 89):
 # for fr in range(0,0):
 for fr in range(2880,3250):
-
+  pitch = cv2.imread("forTransformFinal.jpg")
   frame = cv2.imread("vision2/final"+`fr`+".jpg",cv2.IMREAD_COLOR)
   
   original, foreColor, foreBW = getForeground(frame.copy())
@@ -460,7 +460,6 @@ for fr in range(2880,3250):
 
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomRed, canvas)
     cntBottomRed = newPoints.copy()
-    pitch = cv2.imread("forTransform.jpg")
     hm = homography
     if(len(cntBottomRed) > 0):
 
