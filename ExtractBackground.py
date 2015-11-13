@@ -8,55 +8,71 @@ import numpy as np
 import time
 import matplotlib.colors as colors
 
-def convertBGRtoHSV(b,g,r):
-	r_2 = r/255.0
-	g_2 = g/255.0
-	b_2 = b/255.0
-
-	c_max = max(r_2, g_2, b_2)
-	c_min = min(r_2, g_2, b_2)
-	theta = c_max - c_min
-
-	h = 0 
-	s = 0
-	v = 0
-
-	# Compute H
-	if theta == 0: h = 0
-	elif c_max == r_2: h = 60*(((g_2-b_2)/theta)%6)
-	elif c_max == g_2: h = 60*(((b_2-r_2)/theta)+2)
-	elif c_max == b_2: h = 60*(((r_2-g_2)/theta)+4)
-
-	# Compute S
-	if c_max == 0: s = 0
-	else: s = theta/c_max
-
-	# Compute V
-	v = c_max
-
-	return [int(h), s, v]
-
+      
 def colorDistribution2(startx,starty,deltax,deltay,img):
   endx = int(startx)+deltax
   endy = int(starty)+deltay
-  image = img[starty:endy,startx:endx]
   
+  image = img[starty:endy,startx:endx]
+  BLUE_MIN = np.array([100, 15, 50],np.uint8)
+  BLUE_MAX = np.array([150, 255, 255],np.uint8)
   hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+  frame_threshed = cv2.inRange(hsv_image, BLUE_MIN, BLUE_MAX)
+  cv2.imwrite('output2.jpg', frame_threshed)
   hue, sat, val = hsv_image[:,:,0], hsv_image[:,:,1], hsv_image[:,:,2]
-  nonBlackHue = hue[(val>40)]
-  #nonBlackHue = hue[cv2.bitwise_and(val/np.max(val) > 0.5, sat > 0.5)]
-##  histo = cv2.calcHist( [hsv_image], [0], None, [180], [0,180] )
-##  histo2 = cv2.calcHist( [hsv_image], [2], None, [256], [0,256] )
-##  print histo2
-  #histo2 = cv2.calcHist( [hsv_image], [0,2], None, [180,256], [0,180,0,256] )
-  # [[0-256]]
-  #print val
-  #hist2[50:179]
-  histo = cv2.calcHist( [nonBlackHue], [0], None, [3], [0,3] )
-  maxbin = np.argmax(histo)
-  #print "max:" ,maxbin
-  #return maxbin
-  return cv2.mean(nonBlackHue)[0] 
+  nonBlackHue = hue[(val>20)]
+  
+  numBluePixel = len(frame_threshed[frame_threshed>0])
+  numPixel = deltax * deltay
+  ratio = float(numBluePixel) / float(numPixel)
+  #print "ratio:" , ratio
+  return ratio
+
+def colorDistributionGreen(startx,starty,deltax,deltay,img):
+  endx = int(startx)+deltax
+  endy = int(starty)+deltay 
+  image = img[starty:endy,startx:endx]
+  GREEN_MIN = np.array([35,125,170],np.uint8)
+  GREEN_MAX = np.array([45,255,255],np.uint8)
+  hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+  frame_threshed = cv2.inRange(hsv_image, GREEN_MIN, GREEN_MAX)
+  cv2.imwrite('output3.jpg', frame_threshed)
+  numRedPixel = len(frame_threshed[frame_threshed>0])
+  numPixel = deltax * deltay
+  ratio = float(numRedPixel) / float(numPixel)
+  print "ratio:" , ratio
+  return ratio
+
+def colorDistributionLime(startx,starty,deltax,deltay,img):
+  endx = int(startx)+deltax
+  endy = int(starty)+deltay 
+  image = img[starty:endy,startx:endx]
+  LIME_MIN = np.array([32,130,190],np.uint8)
+  LIME_MAX = np.array([45,255,255],np.uint8)
+  hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+  frame_threshed = cv2.inRange(hsv_image, LIME_MIN, LIME_MAX)
+  cv2.imwrite('output3.jpg', frame_threshed)
+  numRedPixel = len(frame_threshed[frame_threshed>0])
+  numPixel = deltax * deltay
+  ratio = float(numRedPixel) / float(numPixel)
+  print "ratio:" , ratio
+  return ratio
+
+def colorDistributionRed(startx,starty,deltax,deltay,img):
+  endx = int(startx)+deltax
+  endy = int(starty)+deltay 
+  image = img[starty:endy,startx:endx]
+  RED_MIN = np.array([1,100,50],np.uint8)
+  RED_MAX = np.array([20,255,255],np.uint8)
+  hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+  frame_threshed = cv2.inRange(hsv_image, RED_MIN, RED_MAX)
+  cv2.imwrite('output3.jpg', frame_threshed)
+  numRedPixel = len(frame_threshed[frame_threshed>0])
+  numPixel = deltax * deltay
+  ratio = float(numRedPixel) / float(numPixel)
+  print "ratio:" , ratio
+  return ratio
+
 
 def colorDistribution(startx,starty,img):
   endx = int(startx)+3
@@ -109,8 +125,6 @@ videoHeightOffsetBottom = 1030
 videoWidthOffsetLeft = 30
 videoWidthOffsetRight = videoWidth
 
-videoFrameOffset = 55
-
 isFirstFrame = 0
 frame_old = 0
 corners_old = 0
@@ -141,7 +155,7 @@ def filterContours(contours):
 def getForeground(frame, bw = 0):
 
   # fgmask = fgbg1.apply(frame, learningRate=0.01)
-  fgmask = fgbg2.apply(frame, learningRate=0.003)
+  fgmask = fgbg2.apply(frame, learningRate=0.005)
 
   original = frame.copy()
   color = frame
@@ -154,24 +168,17 @@ def getForeground(frame, bw = 0):
 
   return original, color, bw
 
-def getExtremePoints(contour):
-  leftmost = tuple(cnt[cnt[:,:,0].argmin()][0])
-  rightmost = tuple(cnt[cnt[:,:,0].argmax()][0])
-  topmost = tuple(cnt[cnt[:,:,1].argmin()][0])
-  bottommost = tuple(cnt[cnt[:,:,1].argmax()][0])
 
-  return leftmost, rightmost, topmost, bottommost
-
-print "Skipping First ",videoFrameOffset," frames"
+print "Skipping First 50 frames"
 
 
 
 # for fr in range(0,frameCount-1):
-for fr in range(0,500):
+for fr in range(100,500):
 # for fr in range(0,0):
+# for fr in range(0, 1440):
 
   frame = cv2.imread("pics/final"+`fr`+".jpg",cv2.IMREAD_COLOR)
-  
   # _, frame = cap.read()
 
   original, foreColor, foreBW = getForeground(frame.copy())
@@ -180,9 +187,9 @@ for fr in range(0,500):
   # cv2.waitKey(1)
   # continue
 
-  if(isFirstFrame < 1 and fr < videoFrameOffset):
-    cv2.imshow('frame', original)
-    cv2.waitKey(1)
+  if(isFirstFrame < 1 and fr < 150):
+    # cv2.imshow('frame', original)
+    # cv2.waitKey(1)
     continue
 
   # print "start find contours"
@@ -234,21 +241,20 @@ for fr in range(0,500):
   # cv2.imshow('frame', original)
   # continue
 
-  if(isFirstFrame < 1 or corners_count < 21 or  corners_count > 23 or fr % 12 == 0):
+  if(isFirstFrame < 1 or corners_count < 21 or fr % 4 == 0):
 
     startTime = time.time()
 
     ret,thresh = cv2.threshold(foreBW,127,255,0)
     
-    # kernel = np.ones((1,1), 'uint8')
-    # dilated = cv2.dilate(np.array(thresh, dtype='uint8'), kernel)
-    # contours,hierarchy = cv2.findContours(dilated, cv.CV_RETR_TREE, cv.CV_CHAIN_APPROX_SIMPLE)
-    contours,hierarchy = cv2.findContours(thresh, cv.CV_RETR_TREE, cv.CV_CHAIN_APPROX_SIMPLE)
+    kernel = np.ones((1,1), 'uint8')
+    dilated = cv2.dilate(np.array(thresh, dtype='uint8'), kernel)
+    contours,hierarchy = cv2.findContours(dilated, cv.CV_RETR_TREE, cv.CV_CHAIN_APPROX_SIMPLE)
+    #contours,hierarchy = cv2.findContours(thresh, cv.CV_RETR_TREE, cv.CV_CHAIN_APPROX_SIMPLE)
     
     cntBottom = []
     for cnt in contours:
-      area = cv2.contourArea(cnt)
-      
+      area = cv2.contourArea(cnt)     
       x, y = tuple(cnt[cnt[:,:,1].argmax()][0])
       # print x,"-",y,":",area
 
@@ -261,23 +267,30 @@ for fr in range(0,500):
 ##      box = np.int0(box)
 ##      cv2.drawContours(original,[box],0,(0,100,255),2)
       x,y,w2,h2 = cv2.boundingRect(cnt)
-      cv2.rectangle(original,(x,y),(x+w2,y+h2),(0,255,0),2)
+      cv2.rectangle(original,(x,y),(x+w2,y+h2),(255,0,255),2)
       moments = cv2.moments(cnt)  
       if moments['m00']!=0:
         cx = int(moments['m10']/moments['m00'])
-        cy = int(moments['m01']/moments['m00'])
+        cy = int(moments['m01']/moments['m00'])      
         colorval = colorDistribution2(x,y,w2,h2,foreColor)
+        colorval2 = colorDistributionRed(x,y,w2,h2,foreColor)
+        colorvalLime = colorDistributionLime(x,y,w2,h2,foreColor)
+        colorvalGreen = colorDistributionGreen(x,y,w2,h2,foreColor)
         #colorval = colorDistribution(cx,cy,foreColor)
-        print "x: " ,cx," y: ",cy," hue: ", colorval
-        cv2.rectangle(original, (cx,cy), (cx+10,cy+10), cv.RGB(25,15,50), 1)
-        if(colorval <180 and colorval >120):
-          cv2.rectangle(original, (cx,cy), (cx+10,cy+10), cv.RGB(255,255,50), 1)
-##        elif(colorval< 120 and colorval > 70 ):
-##          cv2.rectangle(original, (cx,cy), (cx+5,cy+5), cv.RGB(0,255,20), 1)
-##        elif(colorval < 10):
-##          cv2.rectangle(original, (cx,cy), (cx+5,cy+5), cv.RGB(255,0,0), 1)
-##
+##        print "x: " ,cx," y: ",cy," hue: ", colorval
+##        cv2.rectangle(original, (cx,cy), (cx+10,cy+10), cv.RGB(25,15,50), 1)
+        
+        if(colorval >0.01):
+          cv2.rectangle(original, (cx,cy), (cx+10,cy+10), cv.RGB(255,0,0), 1)
+        elif(colorval2>0.05):
+          cv2.rectangle(original, (cx,cy), (cx+10,cy+10), cv.RGB(0,0,255), 1)
+        elif(colorvalLime>0.05):
+          cv2.rectangle(original, (cx,cy), (cx+10,cy+10), cv.RGB(255,255,255), 1)
+        elif(colorvalGreen>0.05):
+          cv2.rectangle(original, (cx,cy), (cx+10,cy+10), cv.RGB(0,255,0), 1)
+          
     # print "corners:\n", np.array(cntBottom, dtype='f')
+    
     contours_filtered = filterContours(np.array(cntBottom, dtype='f'))
 
     # find corners in the first frame
@@ -294,8 +307,8 @@ for fr in range(0,500):
 
     isFirstFrame = 1;
   
-
-  if(isFirstFrame > 0):
+  cv2.imwrite("out.jpg",original)
+  if(isFirstFrame > 0 and isFirstFrame <= 0):
 
     frame_gray = cv2.cvtColor(foreColor, cv2.COLOR_BGR2GRAY)
     
@@ -310,13 +323,11 @@ for fr in range(0,500):
     good_old = corners_old[st==1]
 
 
-    # drawing blue box to indicate new tracked points
     for i in range(0,len(good_new)):
       x = int(good_new[i,0])
       y = int(good_new[i,1])
       cv2.rectangle(original, (x-w/2,y-h/2), (x+w/2,y+h/2), cv.RGB(0, 0, 255), 1)
 
-    # drawing red box to indicate old tracked points
     for i in range(0,len(good_old)):
       x = int(good_old[i,0])
       y = int(good_old[i,1])
@@ -336,7 +347,7 @@ for fr in range(0,500):
 print "End"
 cv2.waitKey(0)
 
-# cap.release()
+cap.release()
 cv2.destroyAllWindows()
 
 
