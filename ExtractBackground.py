@@ -75,7 +75,7 @@ def colorDistributionWhite(startx,starty,deltax,deltay,img):
   endy = int(starty)+deltay 
 
   image = img[starty:endy,startx:endx]
-  WHITE_MIN = np.array([0,0,150],np.uint8)
+  WHITE_MIN = np.array([0,0,130],np.uint8)
   WHITE_MAX = np.array([180,25,255],np.uint8)
   
   hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -144,17 +144,6 @@ def colorDistributionRed(startx,starty,deltax,deltay,img):
   # print "ratio:" , ratio
   return ratio
 
-def colorDistribution(startx,starty,img):
-  endx = int(startx)+3
-  endy = int(starty)+3
-  image = img[starty-3:endy,startx-3:endx]
-  hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-  hue, sat, val = hsv_image[:,:,0], hsv_image[:,:,1], hsv_image[:,:,2]
-  histo = cv2.calcHist( [hsv_image], [0], None, [256], [0,256] )
-  maxbin = np.argmax(histo)
-  print "max:" ,maxbin
-  return maxbin
-
 
 fgbg1 = cv2.BackgroundSubtractorMOG()
 fgbg2 = cv2.BackgroundSubtractorMOG2()
@@ -184,15 +173,6 @@ cntBottomLime = []
 cntBottomGreen = []
 cntBottomWhite = []
 
-def filterCorners(corners):
-  corners_filtered = np.array([c for c in corners
-  if (c[0,1] >= videoHeightOffsetTop and c[0,1] <= videoHeightOffsetBottom
-    and c[0,0] >= videoWidthOffsetLeft and c[0,0] <= videoWidthOffsetRight
-    and c[0,1] > (c[0,0] * 0.2227) - 957.61
-    and c[0,1] > (c[0,0] * -0.2746) + 1029.75
-    )])
-
-  return corners_filtered
 
 def filterContours(contours):
   contours_filtered = np.array([c for c in contours
@@ -270,7 +250,7 @@ print "Skipping First ",videoFrameOffset," frames"
 
 
 
-for fr in range(0,500):
+for fr in range(1745,5400):
   pitch = cv2.imread("forTransformFinal.jpg")
   frame = cv2.imread("pics/final"+`fr`+".jpg",cv2.IMREAD_COLOR)
   
@@ -327,15 +307,14 @@ for fr in range(0,500):
 
 
   # Actual Code
-  if(isFirstFrame < 1 and fr < videoFrameOffset):
+  if(isFirstFrame < 1 and fr < 1800):
     # cv2.imshow('frame', original)
     # cv2.waitKey(1)
     continue
 
+  startTime = time.time()
 
   if(isFirstFrame < 1 or fr % 6 == 0):
-
-    startTime = time.time()
 
     ret,thresh = cv2.threshold(foreBW,127,255,0)
     
@@ -387,7 +366,13 @@ for fr in range(0,500):
         colorvalLime = colorDistributionLime(boundX, boundY, boundW, boundH, foreColor)
         colorvalGreen = colorDistributionGreen(boundX, boundY, boundW, boundH, foreColor)
         colorvalWhite = colorDistributionWhite(boundX, boundY, boundW, boundH, foreColor)
-        if(colorvalBlue > 0.01):
+        
+        if(colorvalWhite>0.05):
+        
+          # cv2.rectangle(canvas, (cx,cy), (cx+10,cy+10), cv.RGB(0,255,0), 1)
+          cntBottomWhite.append([[bottomX, bottomY]])
+
+        elif(colorvalBlue > 0.04):
           
           # cv2.rectangle(canvas, (cx,cy), (cx+10,cy+10), cv.RGB(255,0,0), 1)
           cntBottomBlue.append([[bottomX, bottomY]])
@@ -402,15 +387,11 @@ for fr in range(0,500):
           # cv2.rectangle(canvas, (cx,cy), (cx+10,cy+10), cv.RGB(255,255,255), 1)
           cntBottomLime.append([[bottomX, bottomY]])
 
-##        elif(colorvalGreen>0.05):
-##        
-##          # cv2.rectangle(canvas, (cx,cy), (cx+10,cy+10), cv.RGB(0,255,0), 1)
-##          cntBottomGreen.append([[bottomX, bottomY]])
-          
-        elif(colorvalWhite>0.05):
-        
-          # cv2.rectangle(canvas, (cx,cy), (cx+10,cy+10), cv.RGB(0,255,0), 1)
-          cntBottomWhite.append([[bottomX, bottomY]])
+       # elif(colorvalGreen>0.05):
+       
+       #   # cv2.rectangle(canvas, (cx,cy), (cx+10,cy+10), cv.RGB(0,255,0), 1)
+       #   cntBottomGreen.append([[bottomX, bottomY]])
+
         else:
 
           # cv2.rectangle(canvas, (cx,cy), (cx+10,cy+10), cv.RGB(0,0,0), 1)
@@ -439,8 +420,6 @@ for fr in range(0,500):
     # corners_count = len(corners_old)
     # corners_total = corners_count
 
-    print "finished find contours: ", time.time() - startTime, "(sec)"
-
     isFirstFrame = 1;
   
 
@@ -450,9 +429,11 @@ for fr in range(0,500):
     
     # print "corners:\n", corners_old
 
+    # red players
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomRed, canvas)
     cntBottomRed = newPoints.copy()
     hm = homography
+
     if(len(cntBottomRed) > 0):
 
       # red team players on field
@@ -479,6 +460,8 @@ for fr in range(0,500):
         y = int(pt[1])
         pitch, px, py = drawPlayer(x,y,homography,pitch,255,0,0)
 
+
+    # blue players
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomBlue, canvas)
     cntBottomBlue = newPoints.copy()
   
@@ -507,17 +490,21 @@ for fr in range(0,500):
         x = int(pt[0])
         y = int(pt[1])
         pitch, px, py = drawPlayer(x,y,homography,pitch,0,0,255)
-        
-    canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomGreen, canvas)
-    cntBottomGreen = newPoints.copy()
 
-    if(len(cntBottomGreen) > 0):
-      for pt in cntBottomGreen[:,0,:]:
-        x = int(pt[0])
-        y = int(pt[1])
-        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(0,255,0), cv.CV_FILLED)
-        pitch,_, _ = drawPlayer(x,y,homography,pitch,0,255,0)
 
+    # green players
+    # canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomGreen, canvas)
+    # cntBottomGreen = newPoints.copy()
+
+    # if(len(cntBottomGreen) > 0):
+    #   for pt in cntBottomGreen[:,0,:]:
+    #     x = int(pt[0])
+    #     y = int(pt[1])
+    #     cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(0,255,0), cv.CV_FILLED)
+    #     pitch,_, _ = drawPlayer(x,y,homography,pitch,0,255,0)
+
+
+    # lime players
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomLime, canvas)
     cntBottomLime = newPoints.copy()
 
@@ -527,18 +514,40 @@ for fr in range(0,500):
         y = int(pt[1])
         cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(203, 86, 194), cv.CV_FILLED )
         pitch,_, _ = drawPlayer(x,y,homography,pitch,203, 86, 194)
-        
+    
+
+    # white players
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomWhite, canvas)
     cntBottomWhite = newPoints.copy()
 
     if(len(cntBottomWhite) > 0):
+
+      redGK = 0
+
+      potentialRedGK = []
+      potentialRedGKPitch = []
       for pt in cntBottomWhite[:,0,:]:
         x = int(pt[0])
         y = int(pt[1])
-        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(255,255,255), cv.CV_FILLED)
-        pitch,_, _ = drawPlayer(x,y,homography,pitch,255,255,255)
+        pitchCopy = pitch.copy()
+        pitchCopy, px, py = drawPlayer(x,y,homography,pitchCopy,255,255,255)
 
-    
+        potentialRedGK.append([[x,y]])
+        potentialRedGKPitch.append([[px, py]])
+
+      potentialRedGK = np.array(potentialRedGK)
+      potentialRedGKPitch = np.array(potentialRedGKPitch)
+
+      if(len(potentialRedGKPitch) > 0 and redGK <= 0):
+        redGK = 1
+        leftmost = tuple(potentialRedGK[potentialRedGKPitch[:,:,0].argmin()][0])
+        x = int(leftmost[0])
+        y = int(leftmost[1])
+        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(255,255,255), cv.CV_FILLED)
+        pitch, px, py = drawPlayer(x,y,homography,pitch,255,255,255)
+
+
+    # black players    
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomUnknown, canvas)
     cntBottomUnknown = newPoints.copy()
 
@@ -601,6 +610,7 @@ for fr in range(0,500):
   #cv2.imwrite("out.jpg", canvas)
   #cv2.imwrite("transform/"+`fr`+".jpg",pitch)
   cv2.imwrite("enlarge/enlarged"+`fr`+".jpg", enlarged)
+  print "finished: ", time.time() - startTime, "(sec)"
   # cv2.imshow('frame', canvas)
   cv2.waitKey(1)
 
