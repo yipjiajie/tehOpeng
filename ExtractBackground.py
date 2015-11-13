@@ -322,7 +322,8 @@ for fr in range(0,500):
       y = int(good_old[i,1])
       cv2.rectangle(original, (x-w/2,y-h/2), (x+w/2,y+h/2), cv.RGB(255, 0, 0), 1)
 
-    cv2.imshow('frame', original)
+    cv2.imwrite("out.jpg",original)
+    #cv2.imshow('frame', original)
     cv2.waitKey(1)
 
 
