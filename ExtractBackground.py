@@ -322,6 +322,7 @@ for fr in range(430,1440):
     cntBottomWhite = []
 
     for cnt in contours:
+      # print "contour:\n",cnt
       area = cv2.contourArea(cnt)     
       bottomX, bottomY = tuple(cnt[cnt[:,:,1].argmax()][0])
 
@@ -420,6 +421,15 @@ for fr in range(430,1440):
     cntBottomRed = newPoints.copy()
     
     if(len(cntBottomRed) > 0):
+
+      # blue team offside line
+      leftmost = tuple(cntBottomRed[cntBottomRed[:,:,0].argmin()][0])
+      x = int(leftmost[0])
+      ytop = int((x * -0.00443) + 233.7784)
+      ybottom = int((x * -0.0081) + 951.7662)
+      cv2.line(canvas, (x, ytop), (x, ybottom), cv.RGB(255, 255, 0), 1)
+
+      # red team players
       for pt in cntBottomRed[:,0,:]:
         x = int(pt[0])
         y = int(pt[1])
@@ -429,6 +439,15 @@ for fr in range(430,1440):
     cntBottomBlue = newPoints.copy()
   
     if(len(cntBottomBlue) > 0):
+
+      # red team offside line
+      rightmost = tuple(cntBottomBlue[cntBottomBlue[:,:,0].argmax()][0])
+      x = rightmost[0]
+      ytop = int((x * -0.00443) + 233.7784)
+      ybottom = int((x * -0.0081) + 951.7662)
+      cv2.line(canvas, (x, ytop), (x, ybottom), cv.RGB(255, 255, 0), 1)
+
+      # blue team players
       for pt in cntBottomBlue[:,0,:]:
         x = int(pt[0])
         y = int(pt[1])
