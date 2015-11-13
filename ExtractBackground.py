@@ -220,11 +220,13 @@ for fr in range(0,500):
     good_old = corners_old[st==1]
 
 
+    # drawing blue box to indicate new tracked points
     for i in range(0,len(good_new)):
       x = int(good_new[i,0])
       y = int(good_new[i,1])
       cv2.rectangle(original, (x-w/2,y-h/2), (x+w/2,y+h/2), cv.RGB(0, 0, 255), 1)
 
+    # drawing red box to indicate old tracked points
     for i in range(0,len(good_old)):
       x = int(good_old[i,0])
       y = int(good_old[i,1])
