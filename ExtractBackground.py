@@ -48,7 +48,7 @@ def drawPlayer(x,y,hm,img,r,g,b):
   tx = int(tx/tz)
   ty = int(ty/tz)
   cv2.circle(img, (tx-2503,ty),20, cv.RGB(r,g,b), thickness=5, lineType=8, shift=0)
-  return img
+  return img, tx-2503, ty
       
 def colorDistributionBlue(startx,starty,deltax,deltay,img):
   
@@ -70,12 +70,29 @@ def colorDistributionBlue(startx,starty,deltax,deltay,img):
   #print "ratio:" , ratio
   return ratio
 
+def colorDistributionWhite(startx,starty,deltax,deltay,img):
+  endx = int(startx)+deltax
+  endy = int(starty)+deltay 
+
+  image = img[starty:endy,startx:endx]
+  WHITE_MIN = np.array([0,0,150],np.uint8)
+  WHITE_MAX = np.array([180,25,255],np.uint8)
+  
+  hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+  frame_threshed = cv2.inRange(hsv_image, WHITE_MIN, WHITE_MAX)
+
+  numRedPixel = len(frame_threshed[frame_threshed>0])
+  numPixel = deltax * deltay
+  ratio = float(numRedPixel) / float(numPixel)
+  # print "ratio:" , ratio
+  return ratio
+
 def colorDistributionGreen(startx,starty,deltax,deltay,img):
   endx = int(startx)+deltax
   endy = int(starty)+deltay 
 
   image = img[starty:endy,startx:endx]
-  GREEN_MIN = np.array([35,125,170],np.uint8)
+  GREEN_MIN = np.array([35,115,155],np.uint8)
   GREEN_MAX = np.array([45,255,255],np.uint8)
   
   hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -94,7 +111,7 @@ def colorDistributionLime(startx,starty,deltax,deltay,img):
   endy = int(starty)+deltay 
   
   image = img[starty:endy,startx:endx]
-  LIME_MIN = np.array([32,130,190],np.uint8)
+  LIME_MIN = np.array([32,120,170],np.uint8)
   LIME_MAX = np.array([45,255,255],np.uint8)
   
   hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -398,7 +415,7 @@ for fr in range(2880,3250):
         colorvalRed = colorDistributionRed(boundX, boundY, boundW, boundH, foreColor)
         colorvalLime = colorDistributionLime(boundX, boundY, boundW, boundH, foreColor)
         colorvalGreen = colorDistributionGreen(boundX, boundY, boundW, boundH, foreColor)
-        
+        colorvalWhite = colorDistributionWhite(boundX, boundY, boundW, boundH, foreColor)
         if(colorvalBlue > 0.01):
           
           # cv2.rectangle(canvas, (cx,cy), (cx+10,cy+10), cv.RGB(255,0,0), 1)
@@ -418,7 +435,11 @@ for fr in range(2880,3250):
         
           # cv2.rectangle(canvas, (cx,cy), (cx+10,cy+10), cv.RGB(0,255,0), 1)
           cntBottomGreen.append([[bottomX, bottomY]])
-
+          
+        elif(colorvalWhite>0.05):
+        
+          # cv2.rectangle(canvas, (cx,cy), (cx+10,cy+10), cv.RGB(0,255,0), 1)
+          cntBottomWhite.append([[bottomX, bottomY]])
         else:
 
           # cv2.rectangle(canvas, (cx,cy), (cx+10,cy+10), cv.RGB(0,0,0), 1)
@@ -463,38 +484,44 @@ for fr in range(2880,3250):
     hm = homography
     if(len(cntBottomRed) > 0):
 
-      # blue team offside line
-      leftmost = tuple(cntBottomRed[cntBottomRed[:,:,0].argmin()][0])
-      x = int(leftmost[0])
-      ytop = int((x * -0.00443) + 233.7784)
-      ybottom = int((x * -0.0081) + 951.7662)
-      cv2.line(canvas, (x, ytop), (x, ybottom), cv.RGB(255, 255, 0), 1)
-
       # red team players
+      playersRed = []
       for pt in cntBottomRed[:,0,:]:
         x = int(pt[0])
         y = int(pt[1])
         cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(255,0,0), 1)
-        pitch = drawPlayer(x,y,homography,pitch,255,0,0)
+        pitch, px, py = drawPlayer(x,y,homography,pitch,255,0,0)
+        playersRed.append([[px, py]])
+
+      playersRed = np.array(playersRed, dtype='f')
+
+      # blue team offside line
+      leftmost = tuple(playersRed[playersRed[:,:,0].argmin()][0])
+      x = int(leftmost[0])
+      y = int(leftmost[1])
+      cv2.line(pitch, (x, 0), (x, len(pitch[0,:])), cv.RGB(255, 255, 0), 10)
 
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomBlue, canvas)
     cntBottomBlue = newPoints.copy()
   
     if(len(cntBottomBlue) > 0):
 
-      # red team offside line
-      rightmost = tuple(cntBottomBlue[cntBottomBlue[:,:,0].argmax()][0])
-      x = rightmost[0]
-      ytop = int((x * -0.00443) + 233.7784)
-      ybottom = int((x * -0.0081) + 951.7662)
-      cv2.line(canvas, (x, ytop), (x, ybottom), cv.RGB(255, 255, 0), 1)
-
       # blue team players
+      playersBlue = []
       for pt in cntBottomBlue[:,0,:]:
         x = int(pt[0])
         y = int(pt[1])
         cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(0,0,255), 1)
-        pitch = drawPlayer(x,y,homography,pitch,0,0,255)
+        pitch, px, py = drawPlayer(x,y,homography,pitch,0,0,255)
+        playersBlue.append([[px, py]])
+
+      playersBlue = np.array(playersBlue, dtype='f')
+
+      # red team offside line
+      rightmost = tuple(playersBlue[playersBlue[:,:,0].argmax()][0])
+      x = int(rightmost[0])
+      y = int(rightmost[1])
+      cv2.line(pitch, (x, 0), (x, len(pitch[0,:])), cv.RGB(255, 255, 0), 10)
         
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomGreen, canvas)
     cntBottomGreen = newPoints.copy()
@@ -504,7 +531,7 @@ for fr in range(2880,3250):
         x = int(pt[0])
         y = int(pt[1])
         cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(0,255,0), 1)
-        pitch = drawPlayer(x,y,homography,pitch,0,255,0)
+        pitch,_, _ = drawPlayer(x,y,homography,pitch,0,255,0)
 
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomLime, canvas)
     cntBottomLime = newPoints.copy()
@@ -513,8 +540,8 @@ for fr in range(2880,3250):
       for pt in cntBottomLime[:,0,:]:
         x = int(pt[0])
         y = int(pt[1])
-        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(255,255,255), 1)
-        pitch = drawPlayer(x,y,homography,pitch,255,255,255)
+        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(203, 86, 194), 1)
+        pitch,_, _ = drawPlayer(x,y,homography,pitch,203, 86, 194)
         
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomWhite, canvas)
     cntBottomWhite = newPoints.copy()
@@ -527,8 +554,15 @@ for fr in range(2880,3250):
         x = int(pt[0])
         y = int(pt[1])
         cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(0,0,0), 1)
-        pitch = drawPlayer(x,y,homography,pitch,0,0,0)
+        pitch,_, _ = drawPlayer(x,y,homography,pitch,0,0,0)
+        
 
+    if(len(cntBottomWhite) > 0):
+      for pt in cntBottomWhite[:,0,:]:
+        x = int(pt[0])
+        y = int(pt[1])
+        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(255,255,255), 1)
+        pitch,_, _ = drawPlayer(x,y,homography,pitch,255,255,255)
     # Now update the previous frame and previous points
     frame_old = frame_gray.copy()
     # corners_old = good_new.reshape(-1,1,2)
