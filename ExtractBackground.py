@@ -47,7 +47,7 @@ def drawPlayer(x,y,hm,img,r,g,b):
   ty =  hm[1,0]* x  + hm[1,1]*y + hm[1,2]
   tx = int(tx/tz)
   ty = int(ty/tz)
-  cv2.circle(img, (tx-2503,ty),20, cv.RGB(r,g,b), thickness=5, lineType=8, shift=0)
+  cv2.circle(img, (tx-2503,ty),20, cv.RGB(r,g,b), thickness=cv.CV_FILLED, lineType=8, shift=0)
   return img, tx-2503, ty
       
 def colorDistributionBlue(startx,starty,deltax,deltay,img):
@@ -356,7 +356,7 @@ for fr in range(0,500):
 
 
   # Actual Code
-  if(isFirstFrame < 1 and fr < 55):
+  if(isFirstFrame < 1 and fr < 1):
     # cv2.imshow('frame', original)
     # cv2.waitKey(1)
     continue
@@ -484,13 +484,14 @@ for fr in range(0,500):
     hm = homography
     if(len(cntBottomRed) > 0):
 
-      # red team players
+      # red team players on field
       playersRed = []
       for pt in cntBottomRed[:,0,:]:
         x = int(pt[0])
         y = int(pt[1])
-        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(255,0,0), 1)
-        pitch, px, py = drawPlayer(x,y,homography,pitch,255,0,0)
+        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(255,0,0), cv.CV_FILLED)
+        pitchCopy = pitch.copy()
+        pitchCopy, px, py = drawPlayer(x,y,homography,pitchCopy,255,0,0)
         playersRed.append([[px, py]])
 
       playersRed = np.array(playersRed, dtype='f')
@@ -501,27 +502,40 @@ for fr in range(0,500):
       y = int(leftmost[1])
       cv2.line(pitch, (x, 0), (x, len(pitch[0,:])), cv.RGB(255, 255, 0), 10)
 
+      # red team players on pitch
+      for pt in cntBottomRed[:,0,:]:
+        x = int(pt[0])
+        y = int(pt[1])
+        pitch, px, py = drawPlayer(x,y,homography,pitch,255,0,0)
+
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomBlue, canvas)
     cntBottomBlue = newPoints.copy()
   
     if(len(cntBottomBlue) > 0):
 
-      # blue team players
+      # blue team players on field
       playersBlue = []
       for pt in cntBottomBlue[:,0,:]:
         x = int(pt[0])
         y = int(pt[1])
-        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(0,0,255), 1)
-        pitch, px, py = drawPlayer(x,y,homography,pitch,0,0,255)
+        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(0,0,255), cv.CV_FILLED)
+        pitchCopy = pitch.copy()
+        pitchCopy, px, py = drawPlayer(x,y,homography,pitchCopy,0,0,255)
         playersBlue.append([[px, py]])
 
       playersBlue = np.array(playersBlue, dtype='f')
-
+      
       # red team offside line
       rightmost = tuple(playersBlue[playersBlue[:,:,0].argmax()][0])
       x = int(rightmost[0])
       y = int(rightmost[1])
       cv2.line(pitch, (x, 0), (x, len(pitch[0,:])), cv.RGB(255, 255, 0), 10)
+
+      # blue team players on pitch
+      for pt in cntBottomBlue[:,0,:]:
+        x = int(pt[0])
+        y = int(pt[1])
+        pitch, px, py = drawPlayer(x,y,homography,pitch,0,0,255)
         
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomGreen, canvas)
     cntBottomGreen = newPoints.copy()
@@ -530,7 +544,7 @@ for fr in range(0,500):
       for pt in cntBottomGreen[:,0,:]:
         x = int(pt[0])
         y = int(pt[1])
-        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(0,255,0), 1)
+        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(0,255,0), cv.CV_FILLED)
         pitch,_, _ = drawPlayer(x,y,homography,pitch,0,255,0)
 
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomLime, canvas)
@@ -540,7 +554,7 @@ for fr in range(0,500):
       for pt in cntBottomLime[:,0,:]:
         x = int(pt[0])
         y = int(pt[1])
-        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(203, 86, 194), 1)
+        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(203, 86, 194), cv.CV_FILLED )
         pitch,_, _ = drawPlayer(x,y,homography,pitch,203, 86, 194)
         
     canvas, newPoints = trackPoints(frame_old, frame_gray, cntBottomWhite, canvas)
@@ -550,7 +564,7 @@ for fr in range(0,500):
       for pt in cntBottomWhite[:,0,:]:
         x = int(pt[0])
         y = int(pt[1])
-        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(255,255,255), 1)
+        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(255,255,255), cv.CV_FILLED)
         pitch,_, _ = drawPlayer(x,y,homography,pitch,255,255,255)
 
     
@@ -581,7 +595,7 @@ for fr in range(0,500):
         rightmost = tuple(potentialBlueGK[potentialBlueGKPitch[:,:,0].argmax()][0])
         x = int(rightmost[0])
         y = int(rightmost[1])
-        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(0,0,0), 1)
+        cv2.rectangle(canvas, (x-5, y-5), (x+5,y+5), cv.RGB(0,0,0), cv.CV_FILLED)
         pitch, px, py = drawPlayer(x,y,homography,pitch,0,0,0)
 
 
@@ -594,13 +608,28 @@ for fr in range(0,500):
     # corners_count = len(cntBottomUnknown) + len(cntBottomUnknown) + len(cntBottomRed) + len(cntBottomBlue) + len(cntBottomLime) + len(cntBottomGreen) + len(cntBottomWhite)
 
 
-  cv2.line(canvas, (94, 951), (7332, 892), cv.RGB(255,0,0), 1)
-  cv2.line(canvas, (2722, 212), (4809, 203), cv.RGB(255,0,0), 1)
-  cv2.line(canvas, (94,951), (2722, 212), cv.RGB(255,0,0), 1)
-  cv2.line(canvas, (4809, 203), (7332, 770), cv.RGB(255,0,0), 1)
+  #cv2.line(canvas, (94, 951), (7332, 892), cv.RGB(255,0,0), 1)
+  #cv2.line(canvas, (2722, 212), (4809, 203), cv.RGB(255,0,0), 1)
+  #cv2.line(canvas, (94,951), (2722, 212), cv.RGB(255,0,0), 1)
+  #cv2.line(canvas, (4809, 203), (7332, 770), cv.RGB(255,0,0), 1)
 
-  cv2.imwrite("out.jpg", canvas)
-  cv2.imwrite("transform/"+`fr`+".jpg",pitch)
+  canvas = cv2.resize(canvas, (0,0), fx = 0.5, fy =0.7)
+  pitch = cv2.resize(pitch, (0,0), fx = 0.5, fy =0.5)
+
+  canvas_w = len(canvas[0,:])
+  canvas_h = len(canvas[:,0])
+  pitch_w = len(pitch[0,:])
+  pitch_h = len(pitch[:,0])
+  pitch_offset = canvas_w/2 - pitch_w/2
+  pitch_wEnd = pitch_offset +pitch_w
+  total_h = canvas_h + pitch_h
+
+  enlarged = np.zeros((total_h,canvas_w,3))
+  enlarged[0:canvas_h, 0:canvas_w] = canvas
+  enlarged[canvas_h:total_h, pitch_offset:pitch_wEnd] = pitch
+  #cv2.imwrite("out.jpg", canvas)
+  #cv2.imwrite("transform/"+`fr`+".jpg",pitch)
+  cv2.imwrite("enlarge/enlarged"+`fr`+".jpg", enlarged)
   # cv2.imshow('frame', canvas)
   cv2.waitKey(1)
 
