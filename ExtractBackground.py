@@ -125,6 +125,8 @@ videoHeightOffsetBottom = 1030
 videoWidthOffsetLeft = 30
 videoWidthOffsetRight = videoWidth
 
+videoFrameOffset = 55
+
 isFirstFrame = 0
 frame_old = 0
 corners_old = 0
@@ -155,7 +157,7 @@ def filterContours(contours):
 def getForeground(frame, bw = 0):
 
   # fgmask = fgbg1.apply(frame, learningRate=0.01)
-  fgmask = fgbg2.apply(frame, learningRate=0.005)
+  fgmask = fgbg2.apply(frame, learningRate=0.003)
 
   original = frame.copy()
   color = frame
@@ -168,17 +170,24 @@ def getForeground(frame, bw = 0):
 
   return original, color, bw
 
+def getExtremePoints(contour):
+  leftmost = tuple(cnt[cnt[:,:,0].argmin()][0])
+  rightmost = tuple(cnt[cnt[:,:,0].argmax()][0])
+  topmost = tuple(cnt[cnt[:,:,1].argmin()][0])
+  bottommost = tuple(cnt[cnt[:,:,1].argmax()][0])
 
-print "Skipping First 50 frames"
+  return leftmost, rightmost, topmost, bottommost
+
+print "Skipping First ",videoFrameOffset," frames"
 
 
 
 # for fr in range(0,frameCount-1):
-for fr in range(100,500):
+for fr in range(0,500):
 # for fr in range(0,0):
-# for fr in range(0, 1440):
 
   frame = cv2.imread("pics/final"+`fr`+".jpg",cv2.IMREAD_COLOR)
+  
   # _, frame = cap.read()
 
   original, foreColor, foreBW = getForeground(frame.copy())
@@ -187,9 +196,9 @@ for fr in range(100,500):
   # cv2.waitKey(1)
   # continue
 
-  if(isFirstFrame < 1 and fr < 150):
-    # cv2.imshow('frame', original)
-    # cv2.waitKey(1)
+  if(isFirstFrame < 1 and fr < videoFrameOffset):
+    cv2.imshow('frame', original)
+    cv2.waitKey(1)
     continue
 
   # print "start find contours"
@@ -241,7 +250,7 @@ for fr in range(100,500):
   # cv2.imshow('frame', original)
   # continue
 
-  if(isFirstFrame < 1 or corners_count < 21 or fr % 4 == 0):
+  if(isFirstFrame < 1 or corners_count < 21 or  corners_count > 23 or fr % 12 == 0):
 
     startTime = time.time()
 
@@ -323,11 +332,13 @@ for fr in range(100,500):
     good_old = corners_old[st==1]
 
 
+    # drawing blue box to indicate new tracked points
     for i in range(0,len(good_new)):
       x = int(good_new[i,0])
       y = int(good_new[i,1])
       cv2.rectangle(original, (x-w/2,y-h/2), (x+w/2,y+h/2), cv.RGB(0, 0, 255), 1)
 
+    # drawing red box to indicate old tracked points
     for i in range(0,len(good_old)):
       x = int(good_old[i,0])
       y = int(good_old[i,1])
@@ -347,7 +358,7 @@ for fr in range(100,500):
 print "End"
 cv2.waitKey(0)
 
-cap.release()
+# cap.release()
 cv2.destroyAllWindows()
 
 
